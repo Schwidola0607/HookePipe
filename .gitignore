@@ -1,6 +1,7 @@
 __pycache__
 build
 pippy.egg-info
+torchpippy.eng-info
 pippy/version.py
 dist
 .idea/
@@ -8,3 +9,4 @@ dist
 **/*.json
 **/*.out
 **/.DS_STORE
+kpenv/
