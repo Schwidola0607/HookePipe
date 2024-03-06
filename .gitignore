@@ -1,7 +1,7 @@
 __pycache__
 build
 pippy.egg-info
-torchpippy.eng-info
+torchpippy.egg-info
 pippy/version.py
 dist
 .idea/
