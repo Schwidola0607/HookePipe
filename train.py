@@ -89,7 +89,13 @@ def run(args):
     target = torch.randn(512, 10)
     for i in range(N_TRAINING_STEPS):
         optimizer.zero_grad()
-        pipe_loss = stage(x, target)
+        
+        if args.rank == 0:
+          stage(x)
+        elif args.rank == args.world_size - 1:
+          stage(target)
+        else:
+          stage()
         optimizer.step()
 
         log_info = f" Training step {i}, loss: {pipe_loss}"
