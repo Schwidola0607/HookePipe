@@ -52,9 +52,6 @@ from pippy.PipelineStage import PipelineStage
 import torch.optim as optim
 
 import torch.distributed as dist
-dist.init_process_group(backend="gloo")
-
-
 from pippy.IR import LossWrapper
 
 class ModelLossWrapper(LossWrapper):
