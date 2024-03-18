@@ -46,15 +46,8 @@ annotate_split_points(
     },
 )
 
-
+import argparse
 import os
-
-local_rank = int(os.environ["LOCAL_RANK"])
-world_size = int(os.environ["WORLD_SIZE"])
-
-print(local_rank)
-print(world_size)
-
 from pippy.PipelineStage import PipelineStage 
 import torch.optim as optim
 
@@ -62,13 +55,13 @@ import torch.distributed as dist
 dist.init_process_group(backend="gloo")
 
 
-if local_rank == 0:
-    from pippy.IR import LossWrapper
+from pippy.IR import LossWrapper
 
-    class ModelLossWrapper(LossWrapper):
-        def forward(self, x, target):
-            return self.loss_fn(self.module(x), target)
+class ModelLossWrapper(LossWrapper):
+    def forward(self, x, target):
+        return self.loss_fn(self.module(x), target)
 
+def run(args):
     loss_wrapper = ModelLossWrapper(
         module=mn, loss_fn=torch.nn.MSELoss(reduction="sum")
     )
@@ -85,10 +78,10 @@ if local_rank == 0:
 
     example_x = torch.randn(512, 512)
     example_target = torch.randn(512, 10)
-    pipe = Pipe.from_tracing(loss_wrapper, num_chunks=8, 
+    pipe = Pipe.from_tracing(loss_wrapper, args.chunks, 
                              example_args=(example_x,example_target))
 
-    stage = PipelineStage(pipe, local_rank, device="cpu")
+    stage = PipelineStage(pipe, args.rank, args.device)
     print(stage)
     optimizer = optim.SGD(stage.parameters(), lr=0.01)
 
@@ -106,3 +99,33 @@ if local_rank == 0:
         print(log_info.center(80, "*"))
 
     print(" Pipeline parallel model ran successfully! ".center(80, "*"))
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--world_size', type=int, default=int(os.getenv("WORLD_SIZE", 4)))
+    parser.add_argument('--rank', type=int, default=int(os.getenv("RANK", -1)))
+    parser.add_argument('--master_addr', type=str, default=os.getenv('MASTER_ADDR', 'localhost'))
+    parser.add_argument('--master_port', type=str, default=os.getenv('MASTER_PORT', '29500'))
+    parser.add_argument('--schedule', type=str, default="FillDrain")
+    parser.add_argument('--cuda', type=int, default=int(torch.cuda.is_available()))
+    parser.add_argument("--chunks", type=int, default=8)
+    parser.add_argument('--batch_size', type=int, default=4)
+    parser.add_argument('--batches', type=int, default=1)
+
+    args = parser.parse_args()
+
+    if args.cuda:
+        dev_id = args.rank % torch.cuda.device_count()
+        args.device = torch.device(f"cuda:{dev_id}")
+    else:
+        args.device = torch.device("cpu")
+
+    # Init process group
+    backend = "nccl" if args.cuda else "gloo"
+    print(f'rank = {args.rank}\nworld_size = {args.world_size}')
+    dist.init_process_group(
+        backend=backend,
+    )
+    print("finish running process group")
+    run(args)
