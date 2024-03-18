@@ -91,11 +91,11 @@ def run(args):
         optimizer.zero_grad()
         
         if args.rank == 0:
-          stage(x)
+          pipe_loss = stage(x)
         elif args.rank == args.world_size - 1:
-          stage(target)
+          pipe_loss = stage(target)
         else:
-          stage()
+          pipe_loss = stage()
         optimizer.step()
 
         log_info = f" Training step {i}, loss: {pipe_loss}"
