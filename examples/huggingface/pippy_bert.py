@@ -5,9 +5,9 @@
 
 import argparse
 import os
-
 import torch
 import torch.distributed as dist
+from torch.distributed.elastic.multiprocessing.errors import record
 
 from pippy.IR import Pipe, SplitPoint, annotate_split_points
 from pippy.PipelineStage import PipelineStage
@@ -23,14 +23,14 @@ def add_split_points(bert, nranks):
         annotate_split_points(
             bert, {f"bert.encoder.layer.{i * layers_per_rank}": SplitPoint.BEGINNING})
 
-
+@record
 def run(args):
     # Model configs
     config = BertConfig()
     print("Using device:", args.device)
 
     # Create model
-    model_class = BertForMaskedLM
+    model_class = BertForMaskedLM 
     model_name = "BertForMaskedLM"
     bert = model_class(config)
     bert.to(args.device)
@@ -66,7 +66,6 @@ def run(args):
         args.rank,
         device=args.device,
     )
-
     # Run
     if args.rank == 0:
         stage(**example_inputs)
@@ -100,10 +99,9 @@ if __name__ == "__main__":
 
     # Init process group
     backend = "nccl" if args.cuda else "gloo"
+    print(f'rank = {args.rank}\nworld_size = {args.world_size}')
     dist.init_process_group(
         backend=backend,
-        rank=args.rank,
-        world_size=args.world_size,
     )
-
+    print("finish running process group")
     run(args)
