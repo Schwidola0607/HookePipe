@@ -61,55 +61,55 @@ from pippy.PipelineStage import PipelineStage
 import torch.optim as optim
 
 
-if local_rank == 0:
-    from pippy.IR import LossWrapper
+from pippy.IR import LossWrapper
 
-    class ModelLossWrapper(LossWrapper):
-        def forward(self, x, target):
-            output = self.module(x)
-            return output, self.loss_fn(output, target)
+class ModelLossWrapper(LossWrapper):
+    def forward(self, x, target):
+        output = self.module(x)
+        return output, self.loss_fn(output, target)
 
-    loss_wrapper = ModelLossWrapper(
-        module=mn, loss_fn=torch.nn.MSELoss(reduction="sum")
-    )
-
-
-    # TODO: these might be necessary for the loss wrapper
-
-    from pippy.microbatch import sum_reducer
-    from pippy.microbatch import TensorChunkSpec
-
-    output_chunk_spec = (TensorChunkSpec(0), sum_reducer)
-
-    example_x = torch.randn(512, 512)
-    example_target = torch.randn(512, 10)
-    pipe = Pipe.from_tracing(loss_wrapper, num_chunks=2, 
-                                example_args=(example_x,example_target),
-                                output_chunk_spec=output_chunk_spec)
-
-    stage = PipelineStage(pipe, rank, device=torch.device("cpu"))
-    print(stage)
-    optimizer = optim.SGD(stage.submod.parameters(), lr=0.01)
+loss_wrapper = ModelLossWrapper(
+    module=mn, loss_fn=torch.nn.MSELoss(reduction="sum")
+)
 
 
-    N_TRAINING_STEPS = 100
 
-    x = torch.randn(512, 512)
-    target = torch.randn(512, 10)
-    print(world_size)
-    for i in range(N_TRAINING_STEPS):
-        optimizer.zero_grad()
-        if rank == 0:
-            stage(x)
-        elif rank == world_size - 1:
-            pipe_loss = stage(target)
-        else:
-            stage()
+# TODO: these might be necessary for the loss wrapper
+
+from pippy.microbatch import sum_reducer
+from pippy.microbatch import TensorChunkSpec
+
+output_chunk_spec = (TensorChunkSpec(0), sum_reducer)
+
+example_x = torch.randn(512, 512)
+example_target = torch.randn(512, 10)
+pipe = Pipe.from_tracing(loss_wrapper, num_chunks=2, 
+                            example_args=(example_x,example_target),
+                            output_chunk_spec=output_chunk_spec)
+
+stage = PipelineStage(pipe, rank, device=torch.device("cpu"))
+print(stage)
+optimizer = optim.SGD(stage.submod.parameters(), lr=0.0001)
+
+
+N_TRAINING_STEPS = 100
+
+x = torch.randn(512, 512)
+target = torch.randn(512, 10)
+print(world_size)
+for i in range(N_TRAINING_STEPS):
+    optimizer.zero_grad()
+    if rank == 0:
+        stage(x)
+    elif rank == world_size - 1:
+        pipe_loss = stage(target)
         optimizer.step()
+    else:
+        stage()
 
-        if rank == world_size - 1:
-            log_info = f" Training step {i}, loss: {pipe_loss}"
-            print(log_info.center(80, "*"))
+    if rank == world_size - 1:
+        log_info = f" Training step {i}, loss: {pipe_loss}"
+        print(log_info.center(80, "*"))
 
-    print(" Pipeline parallel model ran successfully! ".center(80, "*"))
+print(" Pipeline parallel model ran successfully! ".center(80, "*"))
 
