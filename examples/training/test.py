@@ -96,6 +96,8 @@ N_TRAINING_STEPS = 100
 
 x = torch.randn(512, 512)
 target = torch.randn(512, 10)
+print(f'x shape: {x.size()}')
+print(f'target shape: {target.size()}')
 print(world_size)
 for i in range(N_TRAINING_STEPS):
     optimizer.zero_grad()

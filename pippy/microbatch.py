@@ -356,7 +356,7 @@ def merge_chunks(chunks, chunk_spec):
 
             else:
                 values_to_cat = partial_values
-
+                print(values_to_cat)
             args_flattened.append(torch.cat(values_to_cat, dim=arg.split_dim))
         elif isinstance(arg, CustomReducer):
             reduced_val = arg.init_value

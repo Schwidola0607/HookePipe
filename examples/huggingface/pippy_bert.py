@@ -34,7 +34,6 @@ def run(args):
     model_name = "BertForMaskedLM"
     # bert = model_class(config)
     bert = BertForMaskedLM.from_pretrained('bert-base-uncased')
-
     bert.to(args.device)
     # bert.eval()
     if args.rank == 0:
@@ -43,8 +42,10 @@ def run(args):
         print(bert)
 
     # Input configs
+    # Putting include_loss_args=True runs into 
+    # [rank0]: RuntimeError: zero-dimensional tensor (at position 0) cannot be concatenated
     example_inputs = generate_inputs_for_model(
-        model_class, bert, model_name, args.batch_size, args.device)
+        model_class, bert, model_name, args.batch_size, args.device, include_loss_args=True)
 
     # Annotate split points
     add_split_points(bert, args.world_size)
