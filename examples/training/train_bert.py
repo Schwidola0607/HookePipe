@@ -10,10 +10,10 @@ import torch
 import torch.distributed as dist
 import torch.optim as optim
 
-from torch.utils.data import DataLoader, Dataset
-from pippy.IR import Pipe, SplitPoint, annotate_split_points
-from pippy.PipelineStage import PipelineStage
 from torch.nn.functional import cross_entropy
+from torch.utils.data import DataLoader, Dataset
+from pippy.IR import Pipe, SplitPoint, LossWrapper, annotate_split_points
+from pippy.PipelineStage import PipelineStage
 
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
@@ -50,12 +50,33 @@ def run(args):
 
     print("Using device:", args.device)
 
-    # Create model
-    model_class = AutoModelForSequenceClassification
-    model_name = "AutoModelForSequenceClassification"
-    bert = AutoModelForSequenceClassification.from_pretrained("google-bert/bert-base-cased", num_labels=5)
+    # Model
+    class ReviewClassifier(torch.nn.Module):
+      def __init__(self) -> None:
+        super().__init__()
+        self.model_class = AutoModelForSequenceClassification
+        self.model_name = "AutoModelForSequenceClassification"
+        self.model = AutoModelForSequenceClassification.from_pretrained("google-bert/bert-base-cased", num_labels=5)
+        self.config = self.model.config
+    
+      def forward(self, input_ids) -> None:
+        output = self.model(input_ids, return_dict=False)
+        return output[0]
+
+    bert = ReviewClassifier()
     bert.to(args.device)
-    bert.train()
+
+    # LossWrapper
+    class ModelLossWrapper(LossWrapper):
+      def forward(self, input_ids, labels):
+        output = self.module(input_ids)
+        return output, self.loss_fn(output, labels)
+
+    loss_wrapper = ModelLossWrapper(
+      module=bert, loss_fn=cross_entropy
+    ) 
+
+    # bert.train()
 
     if args.rank == 0:
         print(bert.config)
@@ -64,18 +85,17 @@ def run(args):
 
     # Input configs
     example_inputs = generate_inputs_for_model(
-        model_class, bert, model_name, args.batch_size, args.device, include_loss_args=True)
-    
+        bert.model_class, bert, bert.model_name, args.batch_size, args.device, include_loss_args=True)
+
     # Annotate split points
     add_split_points(bert, args.world_size)
     
     output_chunk_spec = (TensorChunkSpec(0), sum_reducer)
     # Create pipeline
     bert_pipe = Pipe.from_tracing(
-        bert,
+        loss_wrapper,
         num_chunks=args.chunks,
-        example_args=(),
-        example_kwargs=example_inputs,
+        example_args=(example_inputs['input_ids'], example_inputs['labels']),
         output_chunk_spec=output_chunk_spec
     )
     nstages = len(list(bert_pipe.split_gm.children()))
@@ -98,25 +118,17 @@ def run(args):
     print(args.world_size)
     for epoch in range(N_TRAINING_STEPS):
       for batch in tqdm(train_loader, desc=f"Epoch {epoch+1}/{N_TRAINING_STEPS}"):
-          # batch = {k: v.to(args.device) for k, v in batch.items()}
-          # print(batch['input_ids'])
-          # print(batch["labels"])
-
-          batch = example_inputs = generate_inputs_for_model(
-            model_class, bert, model_name, args.batch_size, args.device, include_loss_args=True)
 
           optimizer.zero_grad()
           if args.rank == 0:
-              stage(**batch)
+              stage(input_ids=batch["input_ids"], labels=batch["labels"])
           elif args.rank == args.world_size - 1:
               pipe_loss = stage()
+              log_info = f" Training step {i}, loss: {pipe_loss}"
+              print(log_info.center(80, "*"))
               optimizer.step()
           else:
               stage()
-
-          if args.rank == args.world_size - 1:
-              log_info = f" Training step {i}, loss: {pipe_loss}"
-              print(log_info.center(80, "*"))
 
     print(" Pipeline parallel model ran successfully! ".center(80, "*"))
 
