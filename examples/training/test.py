@@ -2,6 +2,7 @@
 import torch
 from typing import Any
 import time
+import os
 
 start = time.time()
 
@@ -38,19 +39,19 @@ class MyNetwork(torch.nn.Module):
 import torch.distributed as dist
 dist.init_process_group(backend="gloo")
 
-num_hidden_layers = 10
+local_rank = int(os.environ["LOCAL_RANK"])
+rank = int(os.environ["RANK"])
+world_size = int(os.environ["WORLD_SIZE"])
+batch_size = 16
+N_TRAINING_STEPS = 10
+num_minibatches = 100
+num_hidden_layers = 30
+
 mn = MyNetwork(512, [512] + [1024] * num_hidden_layers + [256])
 
 from pippy.IR import annotate_split_points, PipeSplitWrapper, Pipe
 mn.to(torch.device("cpu"))
 
-import os
-
-local_rank = int(os.environ["LOCAL_RANK"])
-rank = int(os.environ["RANK"])
-world_size = int(os.environ["WORLD_SIZE"])
-batch_size = 16
-num_minibatches = 100
 
 layers_per_rank = num_hidden_layers // world_size
 for i in range(1, world_size):
@@ -92,9 +93,6 @@ pipe = Pipe.from_tracing(loss_wrapper, num_chunks=2,
 stage = PipelineStage(pipe, rank, device=torch.device("cpu"))
 print(stage)
 optimizer = optim.SGD(stage.submod.parameters(), lr=0.0001)
-
-
-N_TRAINING_STEPS = 10
 
 x = torch.randn(batch_size, 512)
 target = torch.randn(batch_size, 10)
