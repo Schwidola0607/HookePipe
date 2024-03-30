@@ -3,6 +3,7 @@ import torch
 from typing import Any
 
 
+
 class MyNetworkBlock(torch.nn.Module):
     def __init__(self, in_dim, out_dim):
         super().__init__()
@@ -36,26 +37,24 @@ class MyNetwork(torch.nn.Module):
 import torch.distributed as dist
 dist.init_process_group(backend="gloo")
 
-mn = MyNetwork(512, [512] + [1024] * 10 + [256])
+num_hidden_layers = 10
+mn = MyNetwork(512, [512] + [1024] * num_hidden_layers + [256])
 
 from pippy.IR import annotate_split_points, PipeSplitWrapper, Pipe
 mn.to(torch.device("cpu"))
-
-annotate_split_points(
-    mn,
-    {
-        "layer0": PipeSplitWrapper.SplitPoint.END,
-        "layer1": PipeSplitWrapper.SplitPoint.END,
-        "layer2": PipeSplitWrapper.SplitPoint.END,
-    },
-)
-
 
 import os
 
 local_rank = int(os.environ["LOCAL_RANK"])
 rank = int(os.environ["RANK"])
 world_size = int(os.environ["WORLD_SIZE"])
+batch_size = 16
+num_minibatches = 100
+
+layers_per_rank = num_hidden_layers // world_size
+for i in range(1, world_size):
+    annotate_split_points(
+        mn, {f"layer{i * layers_per_rank}": PipeSplitWrapper.SplitPoint.END})
 
 
 from pippy.PipelineStage import PipelineStage 
@@ -82,8 +81,9 @@ from pippy.microbatch import TensorChunkSpec
 
 output_chunk_spec = (TensorChunkSpec(0), sum_reducer)
 
-example_x = torch.randn(512, 512)
-example_target = torch.randn(512, 10)
+example_x = torch.randn(batch_size, 512)
+example_target = torch.randn(batch_size, 10)
+
 pipe = Pipe.from_tracing(loss_wrapper, num_chunks=2, 
                             example_args=(example_x,example_target),
                             output_chunk_spec=output_chunk_spec)
@@ -95,24 +95,27 @@ optimizer = optim.SGD(stage.submod.parameters(), lr=0.0001)
 
 N_TRAINING_STEPS = 100
 
-x = torch.randn(512, 512)
-target = torch.randn(512, 10)
+x = torch.randn(batch_size, 512)
+target = torch.randn(batch_size, 10)
+
 print(f'x shape: {x.size()}')
 print(f'target shape: {target.size()}')
 print(world_size)
-for i in range(N_TRAINING_STEPS):
-    optimizer.zero_grad()
-    if rank == 0:
-        stage(x)
-    elif rank == world_size - 1:
-        pipe_loss = stage(target)
-        optimizer.step()
-    else:
-        stage()
 
-    if rank == world_size - 1:
-        log_info = f" Training step {i}, loss: {pipe_loss}"
-        print(log_info.center(80, "*"))
+for i in range(N_TRAINING_STEPS):
+    for j in range(num_minibatches):
+      optimizer.zero_grad()
+      if rank == 0:
+          stage(x)
+      elif rank == world_size - 1:
+          pipe_loss = stage(target)
+          optimizer.step()
+      else:
+          stage()
+
+      if rank == world_size - 1:
+          log_info = f" Training step {i}, loss: {pipe_loss}"
+          print(log_info.center(80, "*"))
 
 print(" Pipeline parallel model ran successfully! ".center(80, "*"))
 
