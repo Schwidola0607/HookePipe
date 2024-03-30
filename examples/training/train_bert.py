@@ -27,7 +27,7 @@ def add_split_points(bert, nranks):
     layers_per_rank = bert.config.num_hidden_layers // nranks
     for i in range(1, nranks):
         annotate_split_points(
-            bert, {f"bert.encoder.layer.{i * layers_per_rank}": SplitPoint.BEGINNING})
+            bert, {f"model.bert.encoder.layer.{i * layers_per_rank}": SplitPoint.BEGINNING})
 
 def generate_tokenize_dataset():
   datasets = load_dataset("yelp_review_full", split="train[:10%]")
@@ -67,6 +67,9 @@ def run(args):
     bert = ReviewClassifier()
     bert.to(args.device)
 
+    # Annotate split points
+    add_split_points(bert, args.world_size)
+
     # LossWrapper
     class ModelLossWrapper(LossWrapper):
       def forward(self, input_ids, labels):
@@ -77,8 +80,6 @@ def run(args):
       module=bert, loss_fn=cross_entropy
     ) 
 
-    # bert.train()
-
     if args.rank == 0:
         print(bert.config)
         print(f"Total number of params = {get_number_of_params(bert) // 10 ** 6}M")
@@ -87,9 +88,6 @@ def run(args):
     # Input configs
     example_inputs = generate_inputs_for_model(
         bert.model_class, bert, bert.model_name, args.batch_size, args.device, include_loss_args=True)
-
-    # Annotate split points
-    add_split_points(bert, args.world_size)
     
     output_chunk_spec = (TensorChunkSpec(0), sum_reducer)
     # Create pipeline
@@ -112,6 +110,7 @@ def run(args):
         device=args.device,
     )
 
+    print(stage)
     # Define optimzer
     optimizer = optim.AdamW(stage.submod.parameters(), lr=5e-5)
 
@@ -122,10 +121,10 @@ def run(args):
 
           optimizer.zero_grad()
           if args.rank == 0:
-              stage(input_ids=batch["input_ids"], labels=batch["labels"])
+              stage(batch["input_ids"])
           elif args.rank == args.world_size - 1:
-              pipe_loss = stage()
-              log_info = f" Training step {i}, loss: {pipe_loss}"
+              pipe_loss = stage(batch["labels"])
+              log_info = f" Training step {epoch}, loss: {pipe_loss}"
               print(log_info.center(80, "*"))
               optimizer.step()
           else:
