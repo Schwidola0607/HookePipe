@@ -165,7 +165,9 @@ if __name__ == "__main__":
   
     run(args)
     end = time.time()
-    
-    rtdata = open("runtime.txt", "a+")  # append mode
-    rtdata.write((end - start) / 60)
+    elapsed = (end-start) / 60
+    rtdata = open("traintime.txt", "a+")
+    rtdata.write(f'{elapsed}\n')
     rtdata.close()
+
+    print(f"Stage {args.rank} takes {elapsed} minutes")
