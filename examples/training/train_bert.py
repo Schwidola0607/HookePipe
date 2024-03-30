@@ -159,8 +159,6 @@ if __name__ == "__main__":
     backend = "nccl" if args.cuda else "gloo"
     dist.init_process_group(
         backend=backend,
-        rank=args.rank,
-        world_size=args.world_size,
     )
   
     run(args)
