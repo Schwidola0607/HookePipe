@@ -10,3 +10,4 @@ dist
 **/*.out
 **/.DS_STORE
 kpenv/
+traintime.txt
