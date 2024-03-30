@@ -9,6 +9,7 @@ import inspect
 import torch
 import torch.distributed as dist
 import torch.optim as optim
+import time
 
 from torch.nn.functional import cross_entropy
 from torch.utils.data import DataLoader, Dataset
@@ -134,6 +135,7 @@ def run(args):
 
 
 if __name__ == "__main__":
+    start = time.time()
     parser = argparse.ArgumentParser()
     parser.add_argument('--world_size', type=int, default=int(os.getenv("WORLD_SIZE", 4)))
     parser.add_argument('--rank', type=int, default=int(os.getenv("RANK", -1)))
@@ -160,5 +162,10 @@ if __name__ == "__main__":
         rank=args.rank,
         world_size=args.world_size,
     )
-
+  
     run(args)
+    end = time.time()
+    
+    rtdata = open("runtime.txt", "a+")  # append mode
+    rtdata.write((end - start) / 60)
+    rtdata.close()
