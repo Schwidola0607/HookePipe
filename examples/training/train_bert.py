@@ -147,7 +147,8 @@ if __name__ == "__main__":
     parser.add_argument('--batches', type=int, default=1)
 
     args = parser.parse_args()
-
+    print(args.rank)
+    print(args.world_size)
     if args.cuda:
         dev_id = args.rank % torch.cuda.device_count()
         args.device = torch.device(f"cuda:{dev_id}")

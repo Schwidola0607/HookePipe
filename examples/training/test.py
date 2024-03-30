@@ -36,7 +36,7 @@ class MyNetwork(torch.nn.Module):
 import torch.distributed as dist
 dist.init_process_group(backend="gloo")
 
-mn = MyNetwork(512, [512, 1024, 256])
+mn = MyNetwork(512, [512] + [1024] * 10 + [256])
 
 from pippy.IR import annotate_split_points, PipeSplitWrapper, Pipe
 mn.to(torch.device("cpu"))
@@ -46,6 +46,7 @@ annotate_split_points(
     {
         "layer0": PipeSplitWrapper.SplitPoint.END,
         "layer1": PipeSplitWrapper.SplitPoint.END,
+        "layer2": PipeSplitWrapper.SplitPoint.END,
     },
 )
 
