@@ -1,8 +1,9 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates
 import torch
 from typing import Any
+import time
 
-
+start = time.time()
 
 class MyNetworkBlock(torch.nn.Module):
     def __init__(self, in_dim, out_dim):
@@ -93,7 +94,7 @@ print(stage)
 optimizer = optim.SGD(stage.submod.parameters(), lr=0.0001)
 
 
-N_TRAINING_STEPS = 100
+N_TRAINING_STEPS = 10
 
 x = torch.randn(batch_size, 512)
 target = torch.randn(batch_size, 10)
@@ -119,3 +120,10 @@ for i in range(N_TRAINING_STEPS):
 
 print(" Pipeline parallel model ran successfully! ".center(80, "*"))
 
+end = time.time()
+elapsed = (end-start) / 60
+rtdata = open("traintime.txt", "a+")
+rtdata.write(f'{elapsed}\n')
+rtdata.close()
+
+print(f"Stage {rank} takes {elapsed} minutes")
