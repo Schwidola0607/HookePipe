@@ -3,6 +3,7 @@ import torch
 from typing import Any
 import time
 import os
+from tqdm import tqdm
 
 start = time.time()
 
@@ -45,7 +46,7 @@ world_size = int(os.environ["WORLD_SIZE"])
 batch_size = 16
 N_TRAINING_STEPS = 10
 num_minibatches = 100
-num_hidden_layers = 30
+num_hidden_layers = 1000
 
 mn = MyNetwork(512, [512] + [1024] * num_hidden_layers + [256])
 
@@ -101,7 +102,7 @@ print(f'x shape: {x.size()}')
 print(f'target shape: {target.size()}')
 print(world_size)
 
-for i in range(N_TRAINING_STEPS):
+for i in tqdm(range(N_TRAINING_STEPS)):
     for j in range(num_minibatches):
       optimizer.zero_grad()
       if rank == 0:
