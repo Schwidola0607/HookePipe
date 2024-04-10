@@ -143,8 +143,8 @@ if __name__ == "__main__":
     parser.add_argument('--master_port', type=str, default=os.getenv('MASTER_PORT', '29500'))
     parser.add_argument('--schedule', type=str, default="FillDrain")
     parser.add_argument('--cuda', type=int, default=int(torch.cuda.is_available()))
-    parser.add_argument("--chunks", type=int, default=4)
-    parser.add_argument('--batch_size', type=int, default=4)
+    parser.add_argument("--chunks", type=int, default=2)
+    parser.add_argument('--batch_size', type=int, default=256)
     parser.add_argument('--batches', type=int, default=1)
 
     args = parser.parse_args()
