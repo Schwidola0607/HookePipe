@@ -94,7 +94,8 @@ def run(args):
     bert_pipe = Pipe.from_tracing(
         loss_wrapper,
         num_chunks=args.chunks,
-        example_args=(example_inputs['input_ids'], example_inputs['labels']),
+        example_args=(),
+        example_kwargs=example_inputs,
         output_chunk_spec=output_chunk_spec
     )
     nstages = len(list(bert_pipe.split_gm.children()))
