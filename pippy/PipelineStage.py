@@ -357,6 +357,7 @@ class PipelineStage(torch.nn.Module, QualnameMapMixin):
                 example_value = my_example_value
 
             # TODO: otherwise needs grad accumulation
+            print(dst_list, out_idx)
             assert len(dst_list) == 1
             grad_src = dst_list[0]
             grad_recv_info[out_idx] = RecvInfo(
