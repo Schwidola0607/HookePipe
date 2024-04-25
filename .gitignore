@@ -11,4 +11,5 @@ dist
 **/.DS_STORE
 kpenv/
 traintime.txt
+traintime_resnet.txt
 data/

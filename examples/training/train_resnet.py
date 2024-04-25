@@ -20,6 +20,7 @@ from pippy.PipelineStage import PipelineStage
 
 # Device configuration
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+start = time.time()
 
 def data_loader(data_dir,
                 batch_size,
@@ -241,3 +242,12 @@ for epoch in range(num_epochs):
         del images, labels
         torch.cuda.empty_cache()
         gc.collect()
+
+
+end = time.time()
+elapsed = (end-start) / 60
+rtdata = open("traintime_resnet.txt", "a+")
+rtdata.write(f'{elapsed}\n')
+rtdata.close()
+
+print(f"Stage {rank} takes {elapsed} minutes")
