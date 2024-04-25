@@ -164,6 +164,10 @@ class ResNet(nn.Module):
 
         return x
 
+dist.init_process_group(
+    backend="gloo",
+)
+
 local_rank = int(os.environ["LOCAL_RANK"])
 rank = int(os.environ["RANK"])
 world_size = int(os.environ["WORLD_SIZE"])
@@ -175,12 +179,13 @@ learning_rate = 0.01
 model = ResNet(ResidualBlock, [3, 4, 6, 3]).to(device)
 
 from pippy.IR import annotate_split_points, PipeSplitWrapper, Pipe
-model.to(torch.device("cpu"))
 
 # Run with 4 machines
 annotate_split_points(model, {f"layer{1}": PipeSplitWrapper.SplitPoint.BEGINNING})
 annotate_split_points(model, {f"layer{2}": PipeSplitWrapper.SplitPoint.BEGINNING})
 annotate_split_points(model, {f"layer{3}": PipeSplitWrapper.SplitPoint.BEGINNING})
+
+model.to(torch.device("cpu"))
 
 class ModelLossWrapper(LossWrapper):
     def forward(self, images, labels):
@@ -202,6 +207,9 @@ example_image, example_label = next(iter(train_loader))
 pipe = Pipe.from_tracing(loss_wrapper, num_chunks=2, 
                             example_args=(example_image,example_label),
                             output_chunk_spec=output_chunk_spec)
+
+nstages = len(list(pipe.split_gm.children()))
+assert nstages == world_size, f"nstages = {nstages} nranks = {world_size}"
 
 stage = PipelineStage(pipe, rank, device=torch.device("cpu"))
 print(stage)
