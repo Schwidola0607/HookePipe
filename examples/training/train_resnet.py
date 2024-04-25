@@ -234,9 +234,10 @@ for epoch in range(num_epochs):
             log_info = f" Training step {epoch}, loss: {outputs}"
             print(log_info.center(80, "*"))
             optimizer.step()
+            del outputs
         else:
             stage()
 
-        del images, labels, outputs
+        del images, labels
         torch.cuda.empty_cache()
         gc.collect()
