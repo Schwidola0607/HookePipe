@@ -8,6 +8,8 @@ import sys
 import os
 import fcntl
 
+# design doc
+# https://lucid.app/lucidspark/2a727cdb-ee2a-47af-97a8-6964fba8edd5/edit?invitationId=inv_273daa92-8b0e-4455-9305-3dd94411eec3&page=0_0#
 
 class CoordinatorServicer(hooke_pb2_grpc.CoordinatorServicer):
     def __init__(self):
