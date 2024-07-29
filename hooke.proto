@@ -4,13 +4,13 @@ package hooke;
 
 message Topology {
     repeated string nodes_pipeline = 1;
-    map<int32, NodeInfo> nodes_metadata_store = 2;
+    map<string, NodeInfo> nodes_metadata_store = 2;
 }
 
 message NodeInfo {
     string ip_addr = 1;
     int32 port = 2;
-    int32 node_id = 3;
+    string node_id = 3;
 }
 
 service Coordinator {
