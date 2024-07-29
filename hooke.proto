@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package hooke;
+
+message Topology {
+    repeated string nodes_pipeline = 1;
+    map<int32, NodeInfo> nodes_metadata_store = 2;
+}
+
+message NodeInfo {
+    string ip_addr = 1;
+    int32 port = 2;
+    int32 node_id = 3;
+}
+
+service Coordinator {
+    rpc NodeJoin (NodeInfo) returns (Topology) {}
+    rpc NodeLeave (NodeInfo) returns (Void) {}
+}
+
+service Node {
+    rpc MembershipChanges (Topology) returns (Void) {}
+}
+
+// An empty message
+message Void {}
