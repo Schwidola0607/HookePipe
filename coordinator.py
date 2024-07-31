@@ -1,4 +1,3 @@
-from xmlrpc.server import SimpleXMLRPCServer
 import grpc
 from topology import Topology
 import hooke_pb2_grpc
