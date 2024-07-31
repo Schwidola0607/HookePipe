@@ -26,7 +26,7 @@ def find_available_port(addr: str):
 
     # Arbitrarily chose between 1111 and 44444 for ports
     for i in range(1111, 44444):
-        if is_port_available(addr):
+        if is_port_available(addr, i):
             return i
 
     return -1
