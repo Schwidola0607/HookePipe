@@ -102,18 +102,20 @@ class Topology:
 
         # removes node from pipeline and etcd
         self.nodes_pipeline.remove(node_id)
-        removed = self.etcd.delete_prefix(f"nodes/{node_id}")
+        self.etcd.delete_prefix(f"nodes/{node_id}")
 
-        if removed:
-            self.logger.info("Deleted node %s from topology and memory.", node_id)
-        else:
-            self.logger.error("Error deleting node data from memory. Deleted node %s from topology.", node_id)
+        self.logger.info("Deleted node %s from topology and memory.", node_id)
 
-    # def __str__(self):
-    #     ret_str = "Topology:\n"
-    #     for k, v in self.nodes_metadata_store.items():
-    #         ret_str += f"Node ID: {k}, IP Address: {v.ip_addr}, Port: {v.port}\n"
-    #     return ret_str
+    def __str__(self):
+        ret_str = "Topology:\n"
+        for node_id in self.nodes_pipeline:
+            node_metadata = self.get_node_metadata(node_id)
+            if not node_metadata:
+                ret_str += f"Node ID: {node_id}: Error getting metadata\n"
+                continue
+            ret_str += f"Node ID: {node_id}, IP Address: {node_metadata.get(util.IP.ADDR, "")}, Port: {node_metadata.get(util.IP.PORT, "")}\n"
+        
+        return ret_str
         
 
     def get_node_metadata(self, node_id):
