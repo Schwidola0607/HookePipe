@@ -11,7 +11,6 @@ class Topology:
         # where two consecutive nodes is two consecutive
         # layers in the pipeline
         self.nodes_pipeline = nodes_pipeline
-
         # self.etcd is the inbuilt database connection for node metadata
         self.etcd_client = etcd3.client(host=etcd_host, port=etcd_port)
 
@@ -81,7 +80,6 @@ class Topology:
             self.etcd_client.put(f"nodes/{node_id}/metadata", json.dumps(new_metadata))
             self.etcd_client.put(f"nodes/{node_id}/next_node", str(-1))
             self.etcd_client.put(f"nodes/{node_id}/prev_node", str(prev_node))
-
             self.nodes_pipeline.append(node_id)
 
             # updates prev_node metadata if it exists
