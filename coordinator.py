@@ -1,29 +1,39 @@
 import grpc
 from topology import Topology
+import hooke_pb2
 import hooke_pb2_grpc
 import util
 from concurrent import futures
 import sys
 import os
 import fcntl
-
+import logging
+import etcd3
 # design doc
 # https://lucid.app/lucidspark/2a727cdb-ee2a-47af-97a8-6964fba8edd5/edit?invitationId=inv_273daa92-8b0e-4455-9305-3dd94411eec3&page=0_0#
 
+
 class CoordinatorServicer(hooke_pb2_grpc.CoordinatorServicer):
-    def __init__(self):
-        self.topology = Topology()
+    def __init__(
+        self,
+        etcd_port=2379,
+        etcd_host="localhost",
+    ):
+        etcd_client = etcd3.client(host=etcd_host, port=etcd_port)
+        self.topology = Topology(etcd_client=etcd_client)
         self.clients = {}  # node_id -> NodeStub
-        self.channels = {}  # node_id -> channel
+        self.channels = {}  # node_id -> Channel
+        logging.basicConfig(level=logging.INFO)
+        self.logger = logging.getLogger(__name__)
 
     def NodeJoin(self, request, context):
         node_id = request.node_id
-        ip_addr = request.ip_addr
-        port = request.port
+        node_host = request.host
+        node_port = request.port
 
         print(f"Node {node_id} joined")
-        self.topology.append(node_id, ip_addr, port)
-        self.channels[node_id] = util.create_persistent_channel(ip_addr, port)
+        self.topology.append(node_id)
+        self.channels[node_id] = util.create_persistent_channel(node_host, node_port)
         self.clients[node_id] = hooke_pb2_grpc.NodeStub(self.channels[node_id])
 
         # This should be async in the future
@@ -35,7 +45,10 @@ class CoordinatorServicer(hooke_pb2_grpc.CoordinatorServicer):
             context.set_code(grpc.StatusCode.INTERNAL)
             raise e
 
-        response = util.protobuf_from_topology(self.topology)
+        response = hooke_pb2.NeighborNodes(
+            next_node_id=self.topology.get_next_node_id(node_id),
+            prev_node_id=self.topology.get_prev_node_id(node_id),
+        )
         return response
 
     def NodeLeave(self, request, context):
@@ -47,19 +60,23 @@ class CoordinatorServicer(hooke_pb2_grpc.CoordinatorServicer):
         self.broadcast_new_topology(node_id)
 
     def broadcast_new_topology(self, exclude_node_id=None):
-        print("Broadcasting new topology")
-
-        topology = util.protobuf_from_topology(self.topology)
+        self.logger.info("Broadcasting new neighbor info")
         for node_id in self.clients:
             if node_id != exclude_node_id:
-                print("Broadcasting to", node_id)
+                self.logger.info("Sending neighbor info to", node_id)
                 try:
-                    self.clients[node_id].MembershipChanges(topology)
+                    neighbor = hooke_pb2.NeighborNodes(
+                        next_node_id=self.topology.get_next_node_id(node_id),
+                        prev_node_id=self.topology.get_prev_node_id(node_id),
+                    )
+                    self.clients[node_id].MembershipChanges(neighbor)
                 except grpc.RpcError as e:
-                    print(f"Error while broadcasting topology to {node_id}: {e}")
+                    self.logger.info(
+                        f"Error while broadcasting neighbor info to {node_id}: {e}"
+                    )
                     raise e
-                print("Broadcasted to", node_id)
-        print("Broadcasting done")
+                self.logger.info("Broadcasted to", node_id)
+        self.logger.info("Broadcasting done")
 
     def close(self):
         print("Closing all channels")
@@ -92,7 +109,7 @@ def notify():
         fd = pipe.fileno()
         flags = fcntl.fcntl(fd, fcntl.F_GETFL)
         fcntl.fcntl(fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
-        payload = f"COORDINATOR"
+        payload = "COORDINATOR"
         os.write(fd, payload.encode())
 
 

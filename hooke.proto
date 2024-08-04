@@ -1,25 +1,30 @@
+/*
+Remember to run this command anytime protobuf definition changes
+python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. hooke.proto
+*/
+
 syntax = "proto3";
 
 package hooke;
 
-message Topology {
-    repeated string nodes_pipeline = 1;
-    map<string, NodeInfo> nodes_metadata_store = 2;
+message NeighborInfo {
+    string next_node_id = 1;
+    string prev_node_id = 2;
 }
 
 message NodeInfo {
-    string ip_addr = 1;
+    string host = 1;
     int32 port = 2;
     string node_id = 3;
 }
 
 service Coordinator {
-    rpc NodeJoin (NodeInfo) returns (Topology) {}
+    rpc NodeJoin (NodeInfo) returns (NeighborInfo) {}
     rpc NodeLeave (NodeInfo) returns (Void) {}
 }
 
 service Node {
-    rpc MembershipChanges (Topology) returns (Void) {}
+    rpc MembershipChanges (NeighborInfo) returns (Void) {}
 }
 
 // An empty message

@@ -14,25 +14,21 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0bhooke.proto\x12\x05hooke\"\xb5\x01\n\x08Topology\x12\x16\n\x0enodes_pipeline\x18\x01 \x03(\t\x12\x45\n\x14nodes_metadata_store\x18\x02 \x03(\x0b\x32\'.hooke.Topology.NodesMetadataStoreEntry\x1aJ\n\x17NodesMetadataStoreEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x1e\n\x05value\x18\x02 \x01(\x0b\x32\x0f.hooke.NodeInfo:\x02\x38\x01\":\n\x08NodeInfo\x12\x0f\n\x07ip_addr\x18\x01 \x01(\t\x12\x0c\n\x04port\x18\x02 \x01(\x05\x12\x0f\n\x07node_id\x18\x03 \x01(\t\"\x06\n\x04Void2j\n\x0b\x43oordinator\x12.\n\x08NodeJoin\x12\x0f.hooke.NodeInfo\x1a\x0f.hooke.Topology\"\x00\x12+\n\tNodeLeave\x12\x0f.hooke.NodeInfo\x1a\x0b.hooke.Void\"\x00\x32;\n\x04Node\x12\x33\n\x11MembershipChanges\x12\x0f.hooke.Topology\x1a\x0b.hooke.Void\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0bhooke.proto\x12\x05hooke\":\n\x0cNeighborInfo\x12\x14\n\x0cnext_node_id\x18\x01 \x01(\t\x12\x14\n\x0cprev_node_id\x18\x02 \x01(\t\"7\n\x08NodeInfo\x12\x0c\n\x04host\x18\x01 \x01(\t\x12\x0c\n\x04port\x18\x02 \x01(\x05\x12\x0f\n\x07node_id\x18\x03 \x01(\t\"\x06\n\x04Void2n\n\x0b\x43oordinator\x12\x32\n\x08NodeJoin\x12\x0f.hooke.NodeInfo\x1a\x13.hooke.NeighborInfo\"\x00\x12+\n\tNodeLeave\x12\x0f.hooke.NodeInfo\x1a\x0b.hooke.Void\"\x00\x32?\n\x04Node\x12\x37\n\x11MembershipChanges\x12\x13.hooke.NeighborInfo\x1a\x0b.hooke.Void\"\x00\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'hooke_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_TOPOLOGY_NODESMETADATASTOREENTRY']._loaded_options = None
-  _globals['_TOPOLOGY_NODESMETADATASTOREENTRY']._serialized_options = b'8\001'
-  _globals['_TOPOLOGY']._serialized_start=23
-  _globals['_TOPOLOGY']._serialized_end=204
-  _globals['_TOPOLOGY_NODESMETADATASTOREENTRY']._serialized_start=130
-  _globals['_TOPOLOGY_NODESMETADATASTOREENTRY']._serialized_end=204
-  _globals['_NODEINFO']._serialized_start=206
-  _globals['_NODEINFO']._serialized_end=264
-  _globals['_VOID']._serialized_start=266
-  _globals['_VOID']._serialized_end=272
-  _globals['_COORDINATOR']._serialized_start=274
-  _globals['_COORDINATOR']._serialized_end=380
-  _globals['_NODE']._serialized_start=382
-  _globals['_NODE']._serialized_end=441
+  _globals['_NEIGHBORINFO']._serialized_start=22
+  _globals['_NEIGHBORINFO']._serialized_end=80
+  _globals['_NODEINFO']._serialized_start=82
+  _globals['_NODEINFO']._serialized_end=137
+  _globals['_VOID']._serialized_start=139
+  _globals['_VOID']._serialized_end=145
+  _globals['_COORDINATOR']._serialized_start=147
+  _globals['_COORDINATOR']._serialized_end=257
+  _globals['_NODE']._serialized_start=259
+  _globals['_NODE']._serialized_end=322
 # @@protoc_insertion_point(module_scope)

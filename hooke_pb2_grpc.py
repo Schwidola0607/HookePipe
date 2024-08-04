@@ -42,7 +42,7 @@ class CoordinatorStub(object):
         self.NodeJoin = channel.unary_unary(
                 '/hooke.Coordinator/NodeJoin',
                 request_serializer=hooke__pb2.NodeInfo.SerializeToString,
-                response_deserializer=hooke__pb2.Topology.FromString,
+                response_deserializer=hooke__pb2.NeighborInfo.FromString,
                 _registered_method=True)
         self.NodeLeave = channel.unary_unary(
                 '/hooke.Coordinator/NodeLeave',
@@ -72,7 +72,7 @@ def add_CoordinatorServicer_to_server(servicer, server):
             'NodeJoin': grpc.unary_unary_rpc_method_handler(
                     servicer.NodeJoin,
                     request_deserializer=hooke__pb2.NodeInfo.FromString,
-                    response_serializer=hooke__pb2.Topology.SerializeToString,
+                    response_serializer=hooke__pb2.NeighborInfo.SerializeToString,
             ),
             'NodeLeave': grpc.unary_unary_rpc_method_handler(
                     servicer.NodeLeave,
@@ -106,7 +106,7 @@ class Coordinator(object):
             target,
             '/hooke.Coordinator/NodeJoin',
             hooke__pb2.NodeInfo.SerializeToString,
-            hooke__pb2.Topology.FromString,
+            hooke__pb2.NeighborInfo.FromString,
             options,
             channel_credentials,
             insecure,
@@ -156,7 +156,7 @@ class NodeStub(object):
         """
         self.MembershipChanges = channel.unary_unary(
                 '/hooke.Node/MembershipChanges',
-                request_serializer=hooke__pb2.Topology.SerializeToString,
+                request_serializer=hooke__pb2.NeighborInfo.SerializeToString,
                 response_deserializer=hooke__pb2.Void.FromString,
                 _registered_method=True)
 
@@ -175,7 +175,7 @@ def add_NodeServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'MembershipChanges': grpc.unary_unary_rpc_method_handler(
                     servicer.MembershipChanges,
-                    request_deserializer=hooke__pb2.Topology.FromString,
+                    request_deserializer=hooke__pb2.NeighborInfo.FromString,
                     response_serializer=hooke__pb2.Void.SerializeToString,
             ),
     }
@@ -204,7 +204,7 @@ class Node(object):
             request,
             target,
             '/hooke.Node/MembershipChanges',
-            hooke__pb2.Topology.SerializeToString,
+            hooke__pb2.NeighborInfo.SerializeToString,
             hooke__pb2.Void.FromString,
             options,
             channel_credentials,

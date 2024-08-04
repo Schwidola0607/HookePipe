@@ -21,20 +21,6 @@ def get_random_transformer():
     return random.choice(transformations)
 
 
-def protobuf_from_topology(topology):
-    return hooke_pb2.Topology(
-        nodes_pipeline=topology.nodes_pipeline,
-        nodes_metadata_store=topology.nodes_metadata_store,
-    )
-
-
-def protobuf_to_topology(hooke_topology):
-    return Topology(
-        hooke_topology.nodes_pipeline,
-        hooke_topology.nodes_metadata_store,
-    )
-
-
 def create_persistent_channel(ip_addr, port):
     # tweak these parameters if needed
     options = [
