@@ -21,7 +21,7 @@ class NodeServicer(hooke_pb2_grpc.NodeServicer):
         host="localhost",
         coordinator_port=8080,
         coordinator_host="localhost",
-        etcd_port=2379,
+        etcd_port=58423,
         etcd_host="localhost",
     ):
         self.port = port
@@ -47,9 +47,7 @@ class NodeServicer(hooke_pb2_grpc.NodeServicer):
         self.coordinator_stub = hooke_pb2_grpc.CoordinatorStub(self.coordinator_channel)
         try:
             return self.coordinator_stub.NodeJoin(
-                hooke_pb2.NodeInfo(
-                    host=self.host, node_id=self.id, port=self.port
-                )
+                hooke_pb2.NodeInfo(host=self.host, node_id=self.id, port=self.port)
             )
         except grpc.RpcError as e:
             self.logger.error(f"Error while joining: {e}")
@@ -77,9 +75,7 @@ class NodeServicer(hooke_pb2_grpc.NodeServicer):
     # RPC method call by coordinator
     def MembershipChanges(self, request, context):
         try:
-            self.logger.info(
-                f"New neighbor info for node {self.id}: {request}", flush=True
-            )
+            self.logger.info(f"New neighbor info for node {self.id}: {request}")
             self.neighbor = request
             return hooke_pb2.Void()
         except Exception as e:

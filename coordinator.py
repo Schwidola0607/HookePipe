@@ -16,7 +16,7 @@ import etcd3
 class CoordinatorServicer(hooke_pb2_grpc.CoordinatorServicer):
     def __init__(
         self,
-        etcd_port=2379,
+        etcd_port=58423,
         etcd_host="localhost",
     ):
         etcd_client = etcd3.client(host=etcd_host, port=etcd_port)
@@ -45,7 +45,7 @@ class CoordinatorServicer(hooke_pb2_grpc.CoordinatorServicer):
             context.set_code(grpc.StatusCode.INTERNAL)
             raise e
 
-        response = hooke_pb2.NeighborNodes(
+        response = hooke_pb2.NeighborInfo(
             next_node_id=self.topology.get_next_node_id(node_id),
             prev_node_id=self.topology.get_prev_node_id(node_id),
         )
@@ -63,9 +63,9 @@ class CoordinatorServicer(hooke_pb2_grpc.CoordinatorServicer):
         self.logger.info("Broadcasting new neighbor info")
         for node_id in self.clients:
             if node_id != exclude_node_id:
-                self.logger.info("Sending neighbor info to", node_id)
+                self.logger.info(f"Sending neighbor info to {node_id}")
                 try:
-                    neighbor = hooke_pb2.NeighborNodes(
+                    neighbor = hooke_pb2.NeighborInfo(
                         next_node_id=self.topology.get_next_node_id(node_id),
                         prev_node_id=self.topology.get_prev_node_id(node_id),
                     )
@@ -75,7 +75,7 @@ class CoordinatorServicer(hooke_pb2_grpc.CoordinatorServicer):
                         f"Error while broadcasting neighbor info to {node_id}: {e}"
                     )
                     raise e
-                self.logger.info("Broadcasted to", node_id)
+                self.logger.info(f"Broadcasted to {node_id}")
         self.logger.info("Broadcasting done")
 
     def close(self):

@@ -4,6 +4,8 @@ import json
 import logging
 import etcd_utils
 
+NULL_NODE_ID = "NULL_NODE_ID"
+
 
 class Topology:
     def __init__(self, etcd_client, nodes_pipeline=[]):
@@ -18,56 +20,50 @@ class Topology:
 
     def get_next_node_id(self, node_id):
         """
-        Gets the id for the next node. Returns -1 if it doesn't exist.
+        Gets the id for the next node. Returns NULL_NODE_ID if it doesn't exist.
         """
-        if node_id >= len(self.nodes_pipeline) - 1:
-            return -1
-
         try:
             next_node = self.etcd_client.get(f"nodes/{node_id}/next_node")
 
             if not next_node or not next_node[0]:
-                return -1
+                return NULL_NODE_ID
 
-            return int(next_node[0])
+            return next_node[0]
 
         except Exception as e:
             self.logger.error("Error getting next node id for node %s: %s", node_id, e)
-            return -1
+            return NULL_NODE_ID
 
     def get_prev_node_id(self, node_id):
         """
         Gets the id for the previous node. Returns -1 if it doesn't exist.
         """
-        if node_id == 0:
-            return -1
-
         try:
             prev_node = self.etcd_client.get(f"nodes/{node_id}/prev_node")
 
             if not prev_node or not prev_node[0]:
-                return -1
+                return NULL_NODE_ID
 
-            return int(prev_node[0])
+            return prev_node[0]
 
         except Exception as e:
             self.logger.error(
                 "Error getting previous node id for node %s: %s", node_id, e
             )
-            return -1
+            return NULL_NODE_ID
 
     def append(self, node_id):
         """
         Adds a node to the topology updates next_node for the previous node.
         """
-        prev_node = self.nodes_pipeline[-1] if self.nodes_pipeline else -1
+        prev_node = self.nodes_pipeline[-1] if self.nodes_pipeline else NULL_NODE_ID
         try:
             self.etcd_client.put(f"nodes/{node_id}/next_node", str(-1))
             self.etcd_client.put(f"nodes/{node_id}/prev_node", str(prev_node))
             self.nodes_pipeline.append(node_id)
 
             # updates prev_node metadata if it exists
-            if prev_node != -1:
+            if prev_node != NULL_NODE_ID:
                 self.etcd_client.put(f"nodes/{prev_node}/next_node", str(node_id))
 
             self.logger.info("Appended node %s", node_id)
@@ -86,13 +82,13 @@ class Topology:
             prev_node = self.etcd_client.get(f"nodes/{node_id}/prev_node")
             next_node = self.etcd_client.get(f"nodes/{node_id}/next_node")
 
-            prev_node_id = int(prev_node[0]) if prev_node[0] else -1
-            next_node_id = int(next_node[0]) if next_node[0] else -1
+            prev_node_id = int(prev_node[0]) if prev_node[0] else NULL_NODE_ID
+            next_node_id = int(next_node[0]) if next_node[0] else NULL_NODE_ID
 
-            if prev_node_id > -1:
+            if prev_node_id != NULL_NODE_ID:
                 self.etcd_client.put(f"nodes/{prev_node_id}/next_node", str(next_node))
 
-            if next_node_id > -1:
+            if next_node_id != NULL_NODE_ID:
                 self.etcd_client.put(f"nodes/{next_node_id}/prev_node", str(prev_node))
 
             # removes node from pipeline and etcd
