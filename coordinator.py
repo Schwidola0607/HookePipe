@@ -92,7 +92,7 @@ def serve(port="8080"):
     coordinator_server.add_insecure_port(f"[::]:{port}")
     try:
         coordinator_server.start()
-        # notify()
+        notify()
         print(f"Coordinator started at port {port}")
         coordinator_server.wait_for_termination()
     except Exception as e:
