@@ -3,7 +3,8 @@
 ## Setup
 First, install [Docker](https://docs.docker.com/engine/install/) if you haven't already. Then, do all the following commands in your terminal:
 
-1. `docker compose up -d`
+1. `docker compose up -d`.  
+If you are using Mac ARM `PLATFORM=linux/arm64 docker compose up -d`
 2. Once it is done running, use `docker-compose ps` to check on the status. Then, get the TCP port being used from the PORTS section. For example, if there is `2380/tcp, 0.0.0.0:50814->2379/tcp`, the TCP port would be `50814`.
 3. That value should be the `etcd_port` in the topology.
 
