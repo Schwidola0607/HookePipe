@@ -7,7 +7,7 @@ from concurrent import futures
 import sys
 import os
 import fcntl
-import logging
+from logconfig import colors
 import etcd3
 # design doc
 # https://lucid.app/lucidspark/2a727cdb-ee2a-47af-97a8-6964fba8edd5/edit?invitationId=inv_273daa92-8b0e-4455-9305-3dd94411eec3&page=0_0#
@@ -16,15 +16,14 @@ import etcd3
 class CoordinatorServicer(hooke_pb2_grpc.CoordinatorServicer):
     def __init__(
         self,
-        etcd_port=58423,
+        etcd_port=23790,
         etcd_host="localhost",
     ):
         etcd_client = etcd3.client(host=etcd_host, port=etcd_port)
         self.topology = Topology(etcd_client=etcd_client)
         self.clients = {}  # node_id -> NodeStub
         self.channels = {}  # node_id -> Channel
-        logging.basicConfig(level=logging.INFO)
-        self.logger = logging.getLogger(__name__)
+        self.logger = colors.get_logger("coordinator_logger")
 
     def NodeJoin(self, request, context):
         node_id = request.node_id

@@ -3,6 +3,7 @@ import json
 
 import logging
 import etcd_utils
+from logconfig import colors
 
 NULL_NODE_ID = "NULL_NODE_ID"
 
@@ -16,7 +17,7 @@ class Topology:
         self.etcd_client = etcd_client
         # use logging instead of print statements
         logging.basicConfig(level=logging.INFO)
-        self.logger = logging.getLogger(__name__)
+        self.logger = colors.get_logger("topology_logger")
 
     def get_next_node_id(self, node_id):
         """
