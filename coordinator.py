@@ -31,7 +31,7 @@ class CoordinatorServicer(hooke_pb2_grpc.CoordinatorServicer):
         node_host = request.host
         node_port = request.port
 
-        print(f"Node {node_id} joined")
+        self.logger.info(f"Node {node_id} joined")
         self.topology.append(node_id)
         self.channels[node_id] = util.create_persistent_channel(node_host, node_port)
         self.clients[node_id] = hooke_pb2_grpc.NodeStub(self.channels[node_id])
@@ -40,7 +40,7 @@ class CoordinatorServicer(hooke_pb2_grpc.CoordinatorServicer):
         try:
             self.broadcast_new_topology(node_id)
         except grpc.RpcError as e:
-            print(f"Error while broadcasting topology: {e}")
+            self.logger.error(f"Error while broadcasting topology: {e}")
             context.set_details(str(e))
             context.set_code(grpc.StatusCode.INTERNAL)
             raise e
@@ -53,7 +53,7 @@ class CoordinatorServicer(hooke_pb2_grpc.CoordinatorServicer):
 
     def NodeLeave(self, request, context):
         node_id = request.node_id
-        print(f"Node {node_id} left")
+        self.logger.info(f"Node {node_id} left")
         self.topology.remove(node_id)
 
         # This should be async in the future
@@ -79,7 +79,7 @@ class CoordinatorServicer(hooke_pb2_grpc.CoordinatorServicer):
         self.logger.info("Broadcasting done")
 
     def close(self):
-        print("Closing all channels")
+        self.logger.info("Closing all channels")
         for node_id in self.clients:
             self.channels[node_id].close()
 
