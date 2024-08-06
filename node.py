@@ -1,14 +1,14 @@
 import uuid
 import sys
 from util import get_random_transformer
-import hooke_pb2_grpc
-import hooke_pb2
+import hooke_grpc.hooke_pb2_grpc as hooke_pb2_grpc
+import hooke_grpc.hooke_pb2 as hooke_pb2
 import grpc
 import util
 from concurrent import futures
 import etcd3
 from logconfig import colors
-import etcd_utils
+import topology.etcd_utils as etcd_utils
 import logging
 import json
 

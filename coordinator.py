@@ -1,7 +1,7 @@
 import grpc
-from topology import Topology
-import hooke_pb2
-import hooke_pb2_grpc
+from topology.topology import Topology
+import hooke_grpc.hooke_pb2 as hooke_pb2
+import hooke_grpc.hooke_pb2_grpc as hooke_pb2_grpc
 import util
 from concurrent import futures
 import sys
