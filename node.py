@@ -4,11 +4,10 @@ from util import get_random_transformer
 import hooke_pb2_grpc
 import hooke_pb2
 import grpc
-from topology import Topology
 import util
 from concurrent import futures
 import etcd3
-import network
+from logconfig import colors
 import etcd_utils
 import logging
 import json
@@ -29,8 +28,7 @@ class NodeServicer(hooke_pb2_grpc.NodeServicer):
         self.version = 0
         self.transform = get_random_transformer()
         self.id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"http://localhost:{port}"))
-        logging.basicConfig(level=logging.INFO)
-        self.logger = logging.getLogger(__name__)
+        self.logger = colors.get_logger("node_logger")
         self.neighbor = self.init_coordinator_connection(
             coordinator_host, coordinator_port
         )
