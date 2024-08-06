@@ -21,7 +21,7 @@ class NodeServicer(hooke_pb2_grpc.NodeServicer):
         host="localhost",
         coordinator_port=8080,
         coordinator_host="localhost",
-        etcd_port=58423,
+        etcd_port=23790,
         etcd_host="localhost",
     ):
         self.port = port
