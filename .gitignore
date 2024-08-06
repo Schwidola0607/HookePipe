@@ -2,4 +2,6 @@ pyvenv.cfg
 bin/
 include/
 lib/
+tmp/
 __pycache__/
+.venv
