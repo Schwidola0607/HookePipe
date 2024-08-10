@@ -28,9 +28,8 @@ start_port=8000
 # Loop through the range and start node.py with different ports
 echo "Test with $num_nodes nodes"
 for ((i=0; i<num_nodes; i++)); do
-    port=$((start_port + i))
-    echo starting node on port $port
-    python "node.py" $port &
+    echo starting node $i
+    python "node.py" &
     nodes_pids+=($!)
     # Why do we need to sleep here?
     sleep 1
