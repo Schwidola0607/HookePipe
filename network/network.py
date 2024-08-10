@@ -1,5 +1,6 @@
 import socket
 import etcd3
+import random
 
 def is_port_available(etcd_client: etcd3.Etcd3Client, addr: str, port: int) -> bool:
     """
@@ -23,8 +24,12 @@ def find_available_port(etcd_client: etcd3.Etcd3Client, addr: str) -> int:
     """
 
     # Arbitrarily chose between 1111 and 44444 for ports
-    for i in range(1111, 44444):
-        if is_port_available(etcd_client, addr, i):
-            return i
+    i = 0
+    while i < 44444:
+        port = random.randint(1111, 44444)
+        if is_port_available(etcd_client=etcd_client, addr=addr, port=port):
+            return port
+        
+        i += 1
 
-    return -1
+    raise Exception("unable to find available port")
