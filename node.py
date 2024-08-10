@@ -65,11 +65,7 @@ class NodeServicer(hooke_pb2_grpc.NodeServicer):
     def claim_port(self):
         """Claims a port by creating a lease with etcd, and adds the node metadata"""
         try:
-            self.port = network.find_available_port(self.etcd_client, self.host)
-
-            self.lease = self.etcd_client.lease(ttl=etcd_utils.ETCD_LEASE_EXPIRY_TIME)
-
-            self.etcd_client.put(f"ports/{self.host}/{self.port}", self.id, lease=self.lease)
+            self.lease, self.port = network.find_and_claim_available_port(self.etcd_client, self.host, self.id)
 
             # adds metadata including host and port
             new_metadata = {
