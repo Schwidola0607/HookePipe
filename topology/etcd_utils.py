@@ -19,3 +19,5 @@ class NodeUtil:
         """
 
         return f"nodes/{node_id}/prev_node"
+    
+ETCD_LEASE_EXPIRY_TIME = 300
