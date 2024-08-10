@@ -1,7 +1,7 @@
 import random
-import hooke_pb2
+import hooke_grpc.hooke_pb2 as hooke_pb2
 import grpc
-from topology import Topology
+from topology.topology import Topology
 
 
 def get_random_transformer():

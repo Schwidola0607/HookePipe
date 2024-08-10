@@ -2,7 +2,7 @@
 import json
 
 import logging
-import etcd_utils
+import topology.etcd_utils as etcd_utils
 from logconfig import colors
 
 NULL_NODE_ID = "NULL_NODE_ID"
